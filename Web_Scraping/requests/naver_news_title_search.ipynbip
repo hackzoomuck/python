@@ -1,0 +1,28 @@
+import requests
+from bs4 import BeautifulSoup
+# 앞에 도메인명 빠져있는 것은 하이퍼링크가 되지 않기에 url(https://news.naver.com)과 링크를 합치기 위해 urljoin 사용
+from urllib.parse import urljoin 
+
+url = 'https://news.naver.com/'
+response = requests.get(url)
+print('states code :', response.status_code)  #[output] states code : 200
+print('response header : ', response.headers) #[output] response header :  {'date': 'Mon, 20 Jul 2020 05:27:27 GMT', 'cache-control': 'no-cache', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT', 'set-cookie': 'JSESSIONID=191F0054ADE3CE6F64C3FECD0F35DDE9; Path=/main; HttpOnly', 'content-language': 'ko-KR', 'vary': 'Accept-Encoding', 'content-encoding': 'gzip', 'transfer-encoding': 'chunked', 'content-type': 'text/html;charset=EUC-KR', 'referrer-policy': 'unsafe-url', 'server': 'nfront'}
+response.headers['content-type'] #[output] text/html;charset=EUC-KR'
+response #[output] <Response [200]>
+
+response.text #[output] 페이지 소스보기에서 보여지는 부분 출력됨
+
+# 응답 데이터 텍스트
+html = response.text
+
+# Beautifulsoup 객체 생성
+soup = BeautifulSoup(html, 'html.parser')
+tag_list = soup.select("a[href*=read.nhn]")
+print(type(tag_list), len(tag_list)) #[ouput] <class 'list'> 109
+for idx, a_tag in enumerate(tag_list):
+    print(type(a_tag))
+    print(a_tag)
+    title = a_tag.text.strip() #공백제거
+    link = urljoin(url, a_tag['href']) #url 없는 부분은 url 붙임
+    print(idx, title, link)
+    print('-----------')
