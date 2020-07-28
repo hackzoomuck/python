@@ -1,0 +1,76 @@
+!pip show pymysql
+sql = """
+CREATE TABLE product (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(20) NOT NULL,
+    model_num VARCHAR(10) NOT NULL,
+    model_type VARCHAR(10) NOT NULL,
+    PRIMARY KEY(id)
+);
+"""
+
+import pymysql
+
+db = pymysql.connect(host='localhost', port=3306, db='python_db',\
+                    user='python', passwd='python', charset = 'utf8')
+cursor = db.cursor()
+cursor.execute(sql)
+db.commit()
+
+cursor.execute('drop table product')
+cursor.execute('show tables') #[output] 6
+db.close()
+
+
+import pymysql
+db = pymysql.connect(host='localhost', port=3306, db='python_db',\
+                    user='python', passwd='python', charset = 'utf8')
+
+try:
+    with db.cursor() as cursor:
+        cursor.execute(sql)
+        db.commit()
+        
+        for num in range(10,20):
+            name = 'S20'+str(num)
+            #ins_sql = 'insert into product (name, model_num, model_type) values(%s, %s, %s)'
+            #cursor.execute(ins_sql,(name,'7700','Phone'))
+            ins_sql = "insert into product (name, model_num, model_type) values('"+name+"','7700','Phone')"
+            cursor.execute(ins_sql)
+            print(ins_sql)
+        db.commit()
+        print(cursor.lastrowid)
+finally:
+    db.close()
+    
+    
+# 커서 열어서 조회, 업데이트하기.
+import pymysql
+db = pymysql.connect(host='localhost', port=3306, db='python_db',\
+                    user='python', passwd='python', charset = 'utf8')
+
+try:
+    #selecct, update
+    with db.cursor() as cursor:
+        cursor.execute('select * from product where id=3')
+        result = cursor.fetchone()
+        print(type(result),result)
+        
+        upd_sql = "update product set model_type='%s' where name between 'S2010' and 'S2015'" % '핸드폰'
+        cursor.execute(upd_sql)
+        db.commit()
+        print(cursor.rowcount)
+        cursor.execute('select * from product')
+        result_list = cursor.fetchall()
+        print(type(result_list))
+#         for row in result_list:
+           # print(row[0],row[1],row[2],row[3])
+        
+        #model_type 별로 group by 하는 쿼리 실행
+        cursor.execute('select model_type, count(*) from product group by model_type')
+        result_list2 = cursor.fetchall()
+        for row2 in result_list2:
+            print(row2)
+    
+finally:
+    db.close()
