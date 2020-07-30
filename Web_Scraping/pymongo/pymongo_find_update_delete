@@ -1,0 +1,99 @@
+!pip show pymongo
+
+## [Pymongo을 사용해서 MongoDB 제어하기]
+import pymongo
+
+# connection 생성
+conn = pymongo.MongoClient("localhost",27017)
+print(conn)
+# database 생성
+db = conn.pymongo_db
+print(db)
+print(db.name)
+# collection 생성
+col = db.pymongo_col
+print(col)
+print(col.name)
+
+# insert_one( ), insert_many()함수
+post = {"author":"길동","text":"첫번째 글","tags":["mongodb","python","pymongo"]}
+result = col.insert_one(post)
+print(result)
+print(result.inserted_id)
+
+col.find()
+
+#document 갯수 알아내기
+col.count_documents({})
+
+posts = [
+    {"author":"둘리", "age":10},
+    {"author":"바다", "age":20},
+    {"author":"연못", "age":30},
+]
+col.insert_many(posts)
+
+print(col.count_documents({}))
+for post in col.find({}):
+    print(post)
+   
+for post in col.find({},{"author":1,"age":1,"text":1,"_id":0}).sort("age",pymongo.DESCENDING):
+    print(post)
+ 
+ 
+## employees collection 생성하기
+emp = db.employees
+print(emp)
+
+import datetime
+datetime.datetime.strptime("2016-01-02",'%Y-%m-%d')
+emp_list= [
+  {"number":1001,"last_name":"Smith","first_name":"John","salary":62000,"department":"sales", "hire_date":datetime.datetime.strptime("2016-01-02",'%Y-%m-%d')},
+  {"number":1002,"last_name":"Anderson","first_name":"Jane","salary":57500,"department":"marketing", "hire_date":datetime.datetime.strptime("2016-01-02",'%Y-%m-%d')},
+  {"number":1003,"last_name":"Everest","first_name":"Brad","salary":71000,"department":"sales", "hire_date":datetime.datetime.strptime("2017-02-03",'%Y-%m-%d')},
+  {"number":1004,"last_name":"Horvath","first_name":"Jack","salary":42000,"department":"marketing", "hire_date":datetime.datetime.strptime("2017-06-01",'%Y-%m-%d')},
+]
+emp.insert_many(emp_list)
+for employee in emp.find():
+    print(employee)
+ 
+# first_name like %a%
+filter = {"first_name":{"$regex":"a"}}
+filter = {"first_name":{"$regex":"^J"}}
+filter = {"last_name":{"$regex":"h$"}}
+
+from datetime import datetime
+from_dt = datetime.strptime("2016-01-02",'%Y-%m-%d')
+to_dt = datetime.strptime("2017-05-30",'%Y-%m-%d')
+filter = {
+    "hire_date":{"$gte":from_dt},
+    "hite_date":{"$lte":to_dt}
+}
+filter = {
+    "hire_date":{"$gte":from_dt,"$lte":to_dt}
+}
+filter = {
+    "number":{"$in":[1001,1002]}
+}
+for employee in emp.find(filter,{"_id":0}):
+    print(employee)
+ 
+### update_one(), update_many()
+emp.update_one({"number":1001},{"$set":{"department":"marketing"}})
+#number = 1001, salary 62000 -> 63000
+emp.update_one({"number":1001},{"$set":{"salary":63000}})
+#나는 그냥 set으로 변경했는데 1000증가하게 하심
+emp.update_one({"number":1001},{"$inc":{"salary":1000}})
+
+emp.update_many({},{"$set":{"status":"A"}})
+
+for employees in emp.find({},{"_id":0}):
+    print(employees)
+    
+# update_many()
+# number in [1003,1004] status = 'B'
+emp.update_many({"number":{"$in":[1003,1004]}},{"$set":{"status":"B"}})
+
+# delete_many()
+# status = 'B' 인 employee 삭제
+emp.delete_many({"status":"B"})
