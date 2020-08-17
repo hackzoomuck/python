@@ -1,0 +1,118 @@
+# 1. 붓꽃 데이터 Load
+from sklearn.datasets import load_iris
+iris_datasets  = load_iris()
+print(type(iris_datasets), iris_datasets.keys())
+
+print(iris_datasets['data'].shape) #[output] (150,4)
+iris_datasets['data'] #[output] array([[5.1, 3.5, 1.4, 0.2],[4.9, 3. , 1.4, 0.2],[4.7, 3.2, 1.3, 0.2],,,
+iris_datasets['feature_names'] #[output] ['sepal length (cm)','sepal width (cm)', 'petal length (cm)','petal width (cm)']
+
+# target이라는 field가 label
+print(iris_datasets['target'].shape)  #[output] (150,)
+iris_datasets['target']  #[output] array([0,,,1, 1, 1, 1, 1, 1, 1,,,2, 2, 2, 2, 2, 2,,,])
+
+# 0:'setosa', 1:'versicolor', 2:'virginica'
+iris_datasets['target_names'] #[output] array(['setosa', 'versicolor', 'virginica'], dtype='<U10')
+
+
+# 1.1 iris_data(Bunch) 변환
+# Pandas의 DataFrame 객체로 변환
+
+import pandas as pd
+iris_df = pd.DataFrame(iris_datasets['data'], columns = iris_datasets['feature_names'])
+iris_df.head()
+
+iris_df.tail()
+
+# iris_df 에 target 컬럼을 추가
+iris_df['target'] = iris_datasets['target']
+iris_df.head()
+
+print(type(iris_datasets['target_names']))
+print(iris_datasets['target_names']) #[output] ['setosa' 'versicolor' 'virginica']
+dict(enumerate(iris_datasets['target_names'])) #[output] {0: 'setosa', 1: 'versicolor', 2: 'virginica'}
+
+# iris_df['target']와 같은 표기법
+# 공백이 없을 때에는 .로 부르기 가능
+iris_df.target
+
+# iris_df에 'Label'컬럼을 추가
+iris_df['label'] = iris_df.target.replace(dict(enumerate(iris_datasets['target_names'])))
+iris_df.head()
+iris_df.tail()
+
+# row, colum
+# 특정 컬럼만 가져오기
+iris_df.iloc[:,0:4].head()
+
+### 2. Train data와 Test data로 분류하기
+# train data는 머신러닝 Model를 만들 때 (즉, 학습을 할 때) 사용하는 data
+# test data 해당 Model이 얼마나 잘 동작하는 지 (즉, 예측할 때) 평가할 때 사용하는 data
+# 수학의 함수에서 입력을 x, 출력 y y=f(x)
+# 입력데이터는 대문자 x로 표기하고, 레이블은 y로 표기한다.
+# x_train(입력된 훈련데이터), y_train(훈련데이터의 답), x_test(입력된 테스트데이터), y_test(테스트데이터의 답)
+# x_train(훈련데이터)는 75퍼센트, x_test(테스트 데이터)는 25퍼센트 
+# 캐글은 y_test를 공개하지 않음. 
+# 모의고사
+
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(iris_df.iloc[:,0:4], iris_df['target'], random_state=10) # unpacking, random_state는 임의의 데이터를 일정하게 사용하게 만들어는 것.
+
+# 훈련데이터의 입력데이터와 레이블(답) 건수
+print(x_train.shape)
+print(y_train.shape)
+# 테스트 데이터의 입력데이터와 레이블(답) 건수
+print(x_test.shape)
+print(y_test.shape)
+
+# train data, test data 비중을 변경한 예제
+# x_train, x_test, y_train, y_test = train_test_split(iris_df.iloc[:,0:4], iris_df['target'], test_size=0.33)
+# print(x_train.shape) #[output] (112, 4)
+# print(y_train.shape) #[output] (112,)
+# print(x_test.shape)
+# print(y_test.shape)
+
+# 3. 학습방법(Model 선택)
+# K-NN(nearest neighbors) 최근접 이웃 분류기 사용
+# k지수 - 이웃의 갯수는 3으로 설정
+# 학습하기 : model.fit(x_train, y_train)
+# 예측하기 : model.predict(x_test)
+from sklearn.neighbors import KNeighborsClassifier
+model = KNeighborsClassifier(n_neighbors=3)
+
+# 학습하기
+model.fit(x_train, y_train)
+
+# 모델 평가하기(예측하기)
+y_predict = model.predict(x_test)
+
+# 예측한 답(y_predict)과 실제 답(y_test)을 비교
+import numpy as np
+
+print('테스트 세트의 정확도 {:.2f}'.format(np.mean(y_predict == y_test))) #[output] 테스트 세트의 정확도 0.97
+print('테스트 세트의 정확도 score 함수 사용 {:.2f}'.format(model.score(x_test,y_test))) #[output]테스트 세트의 정확도 score 함수 사용 0.97
+
+# n_neighbors 갯수를 다르게 설정해서  model 를 여러번 생성 하기
+train_accuracy = []
+test_accuracy = []
+neighbors_settings = range(1,20,2)
+neighbors_settings
+for neighbor in neighbors_settings:
+    print(neighbor)
+    model = KNeighborsClassifier(n_neighbors=neighbor)
+    model.fit(x_train, y_train)
+    train_accuracy.append(model.score(x_train, y_train))
+    test_accuracy.append(model.score(x_test, y_test))
+
+train_accuracy
+test_accuracy
+
+# 시각화
+%matplotlib inline
+import matplotlib.pyplot as plt
+
+plt.plot(neighbors_settings, train_accuracy, label='train accuracy') #x축, y축 값 주기
+plt.plot(neighbors_settings, test_accuracy, label='test accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('n_neighbors')
+plt.legend()
